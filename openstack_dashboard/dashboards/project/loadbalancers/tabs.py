@@ -41,6 +41,23 @@ class PoolsTab(tabs.TableTab):
         return pools
 
 
+class CertificatesTab(tabs.TableTab):
+    table_classes = (tables.CertificatesTable,)
+    name = _("Certificates")
+    slug = "certificates"
+    template_name = "horizon/common/_detail_table.html"
+
+    def get_certificatestable_data(self):
+        try:
+            tenant_name = self.request.user.tenant_name
+            certificates = api.avi.certs_list(self.tab_group.request, tenant_name)
+        except Exception:
+            certificates = []
+            exceptions.handle(self.tab_group.request,
+                              _('Unable to retrieve certificates list.'))
+        return certificates
+
+
 class MembersTab(tabs.TableTab):
     table_classes = (tables.MembersTable,)
     name = _("Members")
@@ -79,7 +96,7 @@ class MonitorsTab(tabs.TableTab):
 
 class LoadBalancerTabs(tabs.TabGroup):
     slug = "lbtabs"
-    tabs = (PoolsTab, MembersTab, MonitorsTab)
+    tabs = (PoolsTab, MembersTab, MonitorsTab, CertificatesTab)
     sticky = True
 
 

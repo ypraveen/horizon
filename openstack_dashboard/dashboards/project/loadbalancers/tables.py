@@ -72,6 +72,15 @@ class AddMonitorLink(tables.LinkAction):
     policy_rules = (("network", "create_health_monitor"),)
 
 
+class AddCertificateLink(tables.LinkAction):
+    name = "addcertificate"
+    verbose_name = _("Add Certificate")
+    url = "horizon:project:loadbalancers:addcertificate"
+    classes = ("ajax-modal",)
+    icon = "plus"
+    policy_rules = (("network", "create_health_monitor"),)
+
+
 class DeleteVipLink(policy.PolicyTargetMixin, tables.DeleteAction):
     name = "deletevip"
     policy_rules = (("network", "delete_vip"),)
@@ -142,6 +151,28 @@ class DeleteMonitorLink(policy.PolicyTargetMixin,
         return ungettext_lazy(
             u"Scheduled deletion of Monitor",
             u"Scheduled deletion of Monitors",
+            count
+        )
+
+
+class DeleteCertificateLink(policy.PolicyTargetMixin,
+                        tables.DeleteAction):
+    name = "deletecertificate"
+    policy_rules = (("network", "delete_health_monitor"),)
+
+    @staticmethod
+    def action_present(count):
+        return ungettext_lazy(
+            u"Delete Certificate",
+            u"Delete Certificates",
+            count
+        )
+
+    @staticmethod
+    def action_past(count):
+        return ungettext_lazy(
+            u"Scheduled deletion of Certificate",
+            u"Scheduled deletion of Certificates",
             count
         )
 
@@ -412,3 +443,20 @@ class MonitorsTable(tables.DataTable):
         verbose_name = _("Monitors")
         table_actions = (AddMonitorLink, DeleteMonitorLink)
         row_actions = (UpdateMonitorLink, DeleteMonitorLink)
+
+
+class CertificatesTable(tables.DataTable):
+    name = tables.Column("name",
+                         verbose_name=_("Name"),
+                         link="horizon:project:loadbalancers:certdetails")
+    cname = tables.Column("cname", verbose_name=_("Common Name"))
+    iname = tables.Column("iname", verbose_name=_("Issuer Name"))
+    algo = tables.Column("algo", verbose_name=_("Algorithm"))
+    self_signed = tables.Column("self_signed", verbose_name=_("Self Signed"))
+    expires = tables.Column("expires", verbose_name=_("Valid Until"))
+
+    class Meta(object):
+        name = "certificatestable"
+        verbose_name = _("Certificates")
+        table_actions = (AddCertificateLink, DeleteCertificateLink)
+        row_actions = ()

@@ -33,6 +33,7 @@ Keystone/Nova/Glance/Swift et. al.
 """
 from openstack_dashboard.api import base
 from openstack_dashboard.api import ceilometer
+from openstack_dashboard.api import avi
 from openstack_dashboard.api import cinder
 from openstack_dashboard.api import fwaas
 from openstack_dashboard.api import glance
@@ -50,6 +51,7 @@ from openstack_dashboard.api import vpn
 
 __all__ = [
     "base",
+    "avi",
     "cinder",
     "fwaas",
     "glance",

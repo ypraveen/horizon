@@ -119,6 +119,10 @@ class AddMonitorView(workflows.WorkflowView):
     workflow_class = project_workflows.AddMonitor
 
 
+class AddCertificateView(workflows.WorkflowView):
+    workflow_class = project_workflows.AddCertificate
+
+
 class PoolDetailsView(tabs.TabView):
     tab_group_class = project_tabs.PoolDetailsTabs
     template_name = 'project/loadbalancers/details_tabs.html'
