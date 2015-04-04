@@ -772,6 +772,62 @@ class AddCertificate(workflows.Workflow):
         return False
 
 
+class AssociateCertificateAction(workflows.Action):
+    pool_cert = forms.ChoiceField(label=_("Pool Certificate"))
+    vip_cert = forms.ChoiceField(label=_("VIP Certificate"))
+
+    def __init__(self, request, *args, **kwargs):
+        print "request %s args %s kwargs %s" % (request, args, kwargs)
+        super(AssociateCertificateAction, self).__init__(request, *args, **kwargs)
+        certs = api.avi.certs_list(request, request.user.tenant_name)
+        pool_cert_choices = [("", _("Select a Certificate"))]
+        [pool_cert_choices.append((cert.name, cert.name)) for cert in certs]
+        self.fields["pool_cert"].choices = pool_cert_choices
+        self.fields["pool_cert"].initial = api.avi.get_pool_cert(request, args[0]["pool_id"])
+        self.fields["vip_cert"].choices = pool_cert_choices
+        self.fields["vip_cert"].initial = api.avi.get_vip_cert(request, args[0]["vip_id"])
+        return
+
+    def clean(self):
+        cleaned_data = super(AssociateCertificateAction, self).clean()
+        return cleaned_data
+
+    class Meta(object):
+        name = _("Associate Certificates")
+        permissions = ('openstack.services.network',)
+        help_text = _("Associate certificates.\n\n"
+                      "Specify certificates to associate")
+
+
+class AssociateCertificateStep(workflows.Step):
+    action_class = AssociateCertificateAction
+    contributes = ("pool_cert", "vip_cert")
+    depends_on = ("pool_id", "vip_id")
+
+    def contribute(self, data, context):
+        context = super(AssociateCertificateStep, self).contribute(data, context)
+        if data:
+            return context
+
+
+class AssociateCertificate(workflows.Workflow):
+    slug = "associatecertificate"
+    name = _("Associate Certificates")
+    finalize_button_name = _("Associate")
+    success_message = _('Associated certificates')
+    failure_message = _('Unable to associate certificates')
+    success_url = "horizon:project:loadbalancers:index"
+    default_steps = (AssociateCertificateStep,)
+
+    def handle(self, request, context):
+        try:
+            api.avi.associate_certs(request, **context)
+            return True
+        except Exception:
+            exceptions.handle(request, _("Unable to associate certificates."))
+        return False
+
+
 class AddPMAssociationAction(workflows.Action):
     monitor_id = forms.ChoiceField(label=_("Monitor"))
 

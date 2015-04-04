@@ -111,6 +111,22 @@ class AddVipView(workflows.WorkflowView):
         return initial
 
 
+class AssociateCertificateView(workflows.WorkflowView):
+    workflow_class = project_workflows.AssociateCertificate
+
+    def get_initial(self):
+        initial = super(AssociateCertificateView, self).get_initial()
+        initial['pool_id'] = self.kwargs['pool_id']
+        try:
+            pool = api.lbaas.pool_get(self.request, initial['pool_id'])
+            initial['vip_id'] = pool.vip_id
+        except Exception as e:
+            initial['vip_id'] = ''
+            msg = _('Unable to retrieve pool object and vip_id. %s') % e
+            exceptions.handle(self.request, msg)
+        return initial
+
+
 class AddMemberView(workflows.WorkflowView):
     workflow_class = project_workflows.AddMember
 

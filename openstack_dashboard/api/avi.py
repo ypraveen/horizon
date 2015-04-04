@@ -81,6 +81,9 @@ class AviSession():
     def post(self, url, *args, **kwargs):
         return self.call_api("post", self.prefix + url, *args, **kwargs)
 
+    def put(self, url, *args, **kwargs):
+        return self.call_api("put", self.prefix + url, *args, **kwargs)
+
     def call_api(self, method, *args, **kwargs):
         resp = getattr(self.sess, method)(*args, **kwargs)
         self.update_csrf_token(resp)
@@ -95,6 +98,7 @@ class AviSession():
         return json_resp
 
 
+@memoized
 def avisession(request, tenant = None):
     controller = getattr(settings, 'AVI_CONTROLLER_IP', None)
     token = request.user.token.id
@@ -140,3 +144,51 @@ def add_cert(request, **kwargs):
                      verify=False, timeout=5)
     print "resp: %s" % resp
     return {"id": "hah"}
+
+
+def get_pool_cert(request, pool_id):
+    sess = avisession(request, request.user.tenant_name)
+    pool_id = "pool-%s" % pool_id
+    pool = sess.get("/api/pool/%s?include_name=true" % pool_id)
+    if "ssl_key_and_certificate_ref" in pool:
+        return pool["ssl_key_and_certificate_ref"].split("#")[1]
+    return ""
+
+
+def get_vip_cert(request, vip_id):
+    sess = avisession(request, request.user.tenant_name)
+    vip_id = "virtualservice-%s" % vip_id
+    vip = sess.get("/api/virtualservice/%s?include_name=true" % vip_id)
+    if "ssl_key_and_certificate_refs" in vip and vip["ssl_key_and_certificate_refs"]:
+        return vip["ssl_key_and_certificate_refs"][0].split("#")[1]
+    return ""
+
+
+def associate_certs(request, **kwargs):
+    sess = avisession(request, request.user.tenant_name)
+    logger.info("sess headers: %s", sess.sess.headers)
+    # get sslprofiles and sslcerts from avi
+    certs = sess.get("/api/sslkeyandcertificate").get("results", [])
+    profiles = sess.get("/api/sslprofile").get("results", [])
+    def_profile = profiles[0]["url"]
+    # update
+    if kwargs.get("pool_cert"):
+        pool_id = "pool-" + kwargs.get("pool_id")
+        pool = sess.get("/api/pool/%s" % pool_id)
+        cert_url = next(iter([cert["url"] for cert in certs if cert["name"] == kwargs.get("pool_cert")]), "")
+        #  put pool with default sslprofile and chosen sslcert
+        pool["ssl_profile_ref"] = def_profile
+        pool["ssl_key_and_certificate_ref"] = cert_url
+        resp = sess.put("/api/pool/%s" % pool_id, data=json.dumps(pool))
+        print "resp: %s" % resp
+    # now update VIP
+    if kwargs.get("pool_cert"):
+        vip_id = "virtualservice-" + kwargs.get("vip_id")
+        vip = sess.get("/api/virtualservice/%s" % vip_id)
+        cert_url = next(iter([cert["url"] for cert in certs if cert["name"] == kwargs.get("vip_cert")]), "")
+        vip["ssl_profile_ref"] = def_profile
+        vip["ssl_key_and_certificate_refs"] = [cert_url]
+        vip["services"][0]['enable_ssl'] = True
+        resp = sess.put("/api/virtualservice/%s" % vip_id, data=json.dumps(vip))
+        print "resp: %s" % resp
+    return

@@ -227,6 +227,23 @@ class UpdateVipLink(policy.PolicyTargetMixin, tables.LinkAction):
         return True
 
 
+class AssociateCertificateLink(tables.LinkAction):
+    name = "associatecertificate"
+    verbose_name = _("Associate Certificates")
+    classes = ("ajax-modal", "btn-update")
+    policy_rules = (("network", "update_vip"),)
+
+    def get_link_url(self, pool):
+        base_url = reverse("horizon:project:loadbalancers:associatecertificate",
+                           kwargs={'pool_id': pool.id})
+        return base_url
+
+    def allowed(self, request, datum=None):
+        if datum and not datum.vip_id:
+            return False
+        return True
+
+
 class UpdateMemberLink(policy.PolicyTargetMixin, tables.LinkAction):
     name = "updatemember"
     verbose_name = _("Edit Member")
@@ -367,7 +384,8 @@ class PoolsTable(tables.DataTable):
         table_actions = (AddPoolLink, DeletePoolLink)
         row_actions = (UpdatePoolLink, AddVipLink, UpdateVipLink,
                        DeleteVipLink, AddPMAssociationLink,
-                       DeletePMAssociationLink, DeletePoolLink)
+                       DeletePMAssociationLink, AssociateCertificateLink,
+                       DeletePoolLink)
 
 
 def get_pool_link(member):
