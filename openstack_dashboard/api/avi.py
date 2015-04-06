@@ -180,15 +180,18 @@ def associate_certs(request, **kwargs):
         pool["ssl_profile_ref"] = def_profile
         pool["ssl_key_and_certificate_ref"] = cert_url
         resp = sess.put("/api/pool/%s" % pool_id, data=json.dumps(pool))
-        print "resp: %s" % resp
+        logger.debug("Pool cert update resp: %s", resp)
     # now update VIP
-    if kwargs.get("pool_cert"):
+    if kwargs.get("vip_cert"):
         vip_id = "virtualservice-" + kwargs.get("vip_id")
         vip = sess.get("/api/virtualservice/%s" % vip_id)
         cert_url = next(iter([cert["url"] for cert in certs if cert["name"] == kwargs.get("vip_cert")]), "")
+        # always set vip application_profile_ref to system secure http
+        ssl_app_profile = sess.get("api/applicationprofile?name=System-Secure-HTTP").get("results")[0]["url"]
+        vip["application_profile_ref"] = ssl_app_profile
         vip["ssl_profile_ref"] = def_profile
         vip["ssl_key_and_certificate_refs"] = [cert_url]
         vip["services"][0]['enable_ssl'] = True
         resp = sess.put("/api/virtualservice/%s" % vip_id, data=json.dumps(vip))
-        print "resp: %s" % resp
+        logger.debug("VIP cert update resp: %s", resp)
     return

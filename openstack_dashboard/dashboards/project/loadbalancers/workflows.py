@@ -777,7 +777,7 @@ class AssociateCertificateAction(workflows.Action):
     vip_cert = forms.ChoiceField(label=_("VIP Certificate"))
 
     def __init__(self, request, *args, **kwargs):
-        print "request %s args %s kwargs %s" % (request, args, kwargs)
+        #print "request %s args %s kwargs %s" % (request, args, kwargs)
         super(AssociateCertificateAction, self).__init__(request, *args, **kwargs)
         certs = api.avi.certs_list(request, request.user.tenant_name)
         pool_cert_choices = [("", _("Select a Certificate"))]

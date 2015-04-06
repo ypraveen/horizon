@@ -239,7 +239,10 @@ class AssociateCertificateLink(tables.LinkAction):
         return base_url
 
     def allowed(self, request, datum=None):
-        if datum and not datum.vip_id:
+        if datum and datum.vip_id:
+            vip = api.lbaas.vip_get(request, datum.vip_id)
+        if datum and (not datum.vip_id or datum.protocol != "HTTPS"
+                      or vip.protocol != "HTTPS"):
             return False
         return True
 
