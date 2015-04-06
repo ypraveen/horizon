@@ -1,3 +1,18 @@
+======================================================================================
+LBaaS SSL Certificate Upload and Association Support for Horizon (OpenStack Dashboard)
+======================================================================================
+
+This branch contains example code to upload SSL certificates to a specified
+Avi Controller and to associate uploaded certificates with any VIP or Pool
+created with LBaaS API.
+
+* A new "Certificates" tab to upload certificates to the Avi Controller
+* A new "Associate Certificates" link for each Pool that has a VIP associated with it and at least one of VIP or Pool protocols is "HTTPS".
+
+Modify the openstack_dashboard/local/local_settings.py to include the
+IP address of the Avi Controller. Example:
+AVI_CONTROLLER_IP = "10.10.32.53"
+
 =============================
 Horizon (OpenStack Dashboard)
 =============================
